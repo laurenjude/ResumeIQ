@@ -87,9 +87,64 @@ const styles = `
     font-size: 1.4rem;
     font-weight: 800;
     letter-spacing: -0.5px;
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    padding: 0;
   }
 
   .logo span { color: var(--accent); }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text2);
+  }
+
+  .step {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+
+  .step.active {
+    background: rgba(0, 194, 255, 0.1);
+    border: 1px solid rgba(0, 194, 255, 0.3);
+    color: var(--accent);
+  }
+
+  .step.done {
+    color: var(--accent3);
+  }
+
+  .step-sep {
+    opacity: 0.3;
+  }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1.5rem;
+  }
+
+  .back-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
 
   .badge {
     font-size: 0.7rem;
@@ -817,7 +872,14 @@ export default function App() {
       <div className="glow2" />
       <div className="app">
         <nav>
-          <div className="logo">Resume<span>IQ</span></div>
+          <button className="logo" onClick={reset}>Resume<span>IQ</span></button>
+          <div className="stepper">
+            <span className={`step ${page === 'upload' ? 'active' : 'done'}`}>Upload</span>
+            <span className="step-sep">›</span>
+            <span className={`step ${page === 'loading' ? 'active' : page === 'results' ? 'done' : ''}`}>Analysing</span>
+            <span className="step-sep">›</span>
+            <span className={`step ${page === 'results' ? 'active' : ''}`}>Results</span>
+          </div>
           <div className="badge">AI Powered · Free</div>
         </nav>
 
@@ -903,6 +965,7 @@ export default function App() {
 
         {page === 'results' && results && (
           <div className="results">
+            <button className="back-btn" onClick={reset}>← Review Another Resume</button>
             <div className="results-header">
               <div className="hero-tag">Analysis Complete</div>
               <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>

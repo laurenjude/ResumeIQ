@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 
-const WEBHOOK_URL = 'https://lauren002.app.n8n.cloud/webhook/resume-review';
+const WEBHOOK_URL = "https://lauren002.app.n8n.cloud/webhook/resume-review";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -836,96 +836,108 @@ const styles = `
 
 function getScoreColor(score, max = 10) {
   const pct = (score / max) * 100;
-  if (pct >= 80) return '#00ff94';
-  if (pct >= 60) return '#00c2ff';
-  if (pct >= 40) return '#ff9500';
-  return '#ff4444';
+  if (pct >= 80) return "#00ff94";
+  if (pct >= 60) return "#00c2ff";
+  if (pct >= 40) return "#ff9500";
+  return "#ff4444";
 }
 
 function getGrade(score) {
-  if (score >= 85) return { label: 'Excellent', cls: 'grade-excellent' };
-  if (score >= 70) return { label: 'Good', cls: 'grade-good' };
-  if (score >= 50) return { label: 'Fair', cls: 'grade-fair' };
-  return { label: 'Needs Work', cls: 'grade-poor' };
+  if (score >= 85) return { label: "Excellent", cls: "grade-excellent" };
+  if (score >= 70) return { label: "Good", cls: "grade-good" };
+  if (score >= 50) return { label: "Fair", cls: "grade-fair" };
+  return { label: "Needs Work", cls: "grade-poor" };
 }
 
 const SCORE_LABELS = {
-  relevance_score: 'Relevance',
-  impact_score: 'Impact',
-  clarity_score: 'Clarity',
-  keywords_score: 'Keywords',
-  structure_score: 'Structure',
+  relevance_score: "Relevance",
+  impact_score: "Impact",
+  clarity_score: "Clarity",
+  keywords_score: "Keywords",
+  structure_score: "Structure",
 };
 
 const LOADING_STEPS = [
-  'Uploading your resume...',
-  'Extracting document content...',
-  'Analysing against job requirements...',
-  'Scoring 5 key categories...',
-  'Generating personalised feedback...',
+  "Uploading your resume...",
+  "Extracting document content...",
+  "Analysing against job requirements...",
+  "Scoring 5 key categories...",
+  "Generating personalised feedback...",
 ];
 
 export default function App() {
-  const [page, setPage] = useState('upload');
+  const [page, setPage] = useState("upload");
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [results, setResults] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [file, setFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', jobTitle: '', jobDesc: '' });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    jobTitle: "",
+    jobDesc: "",
+  });
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
   const fileRef = useRef();
 
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash.startsWith('#r=')) {
+    if (hash.startsWith("#r=")) {
       try {
         const decoded = JSON.parse(decodeURIComponent(hash.slice(3)));
         setResults(decoded);
-        setPage('results');
+        setPage("results");
       } catch {}
     }
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) { setError('Please upload your resume PDF.'); return; }
-    if (!form.jobTitle.trim()) { setError('Please enter the job title you are applying for.'); return; }
+    if (!file) {
+      setError("Please upload your resume PDF.");
+      return;
+    }
+    if (!form.jobTitle.trim()) {
+      setError("Please enter the job title you are applying for.");
+      return;
+    }
 
-    setError('');
+    setError("");
     setLoading(true);
-    setPage('loading');
+    setPage("loading");
 
     const stepInterval = setInterval(() => {
-      setLoadingStep(s => Math.min(s + 1, LOADING_STEPS.length - 1));
+      setLoadingStep((s) => Math.min(s + 1, LOADING_STEPS.length - 1));
     }, 2500);
 
     try {
       const fd = new FormData();
-      fd.append('data', file);
-      fd.append('jobTitle', form.jobTitle);
-      fd.append('name', form.name);
-      fd.append('email', form.email);
-      if (form.jobDesc.trim()) fd.append('jobDescription', form.jobDesc);
+      fd.append("data", file, file.name);
+      fd.append("jobTitle", form.jobTitle.trim());
+      fd.append("name", form.name.trim());
+      fd.append("email", form.email.trim());
 
-      const res = await fetch(WEBHOOK_URL, { method: 'POST', body: fd });
+      const res = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        body: fd,
+      });
+
       const json = await res.json();
-
       clearInterval(stepInterval);
 
       if (json.success && json.data) {
-        window.location.hash = 'r=' + encodeURIComponent(JSON.stringify(json.data));
         setResults(json.data);
-        setPage('results');
+        setPage("results");
       } else {
-        throw new Error('Invalid response from server');
+        throw new Error("Invalid response");
       }
     } catch (err) {
       clearInterval(stepInterval);
-      setError('Something went wrong. Please try again.');
-      setPage('upload');
+      setError("Something went wrong. Please try again.");
+      setPage("upload");
     } finally {
       setLoading(false);
       setLoadingStep(0);
@@ -933,12 +945,12 @@ export default function App() {
   };
 
   const reset = () => {
-    window.location.hash = '';
-    setPage('upload');
+    window.location.hash = "";
+    setPage("upload");
     setResults(null);
-    setError('');
+    setError("");
     setFile(null);
-    setForm({ name: '', email: '', jobTitle: '', jobDesc: '' });
+    setForm({ name: "", email: "", jobTitle: "", jobDesc: "" });
     setCopied(false);
     setShared(false);
   };
@@ -963,71 +975,155 @@ export default function App() {
       <div className="glow2" />
       <div className="app">
         <nav>
-          <button className="logo" onClick={reset}>Resume<span>IQ</span></button>
+          <button
+            className="logo"
+            onClick={reset}>
+            Resume<span>IQ</span>
+          </button>
           <div className="stepper">
-            <span className={`step ${page === 'upload' ? 'active' : 'done'}`}>Upload</span>
+            <span className={`step ${page === "upload" ? "active" : "done"}`}>
+              Upload
+            </span>
             <span className="step-sep">›</span>
-            <span className={`step ${page === 'loading' ? 'active' : page === 'results' ? 'done' : ''}`}>Analysing</span>
+            <span
+              className={`step ${page === "loading" ? "active" : page === "results" ? "done" : ""}`}>
+              Analysing
+            </span>
             <span className="step-sep">›</span>
-            <span className={`step ${page === 'results' ? 'active' : ''}`}>Results</span>
+            <span className={`step ${page === "results" ? "active" : ""}`}>
+              Results
+            </span>
           </div>
           <div className="badge">AI Powered · Free</div>
         </nav>
 
-        {page === 'upload' && (
+        {page === "upload" && (
           <>
             <div className="hero">
               <div className="hero-tag">Powered by Groq LLaMA 3.3 70B</div>
-              <h1>Get Your Resume<br /><span className="highlight">Reviewed by AI</span><br />in Seconds</h1>
-              <p className="hero-sub">Upload your resume, tell us the role you want — our AI analyses it across 5 key dimensions and gives you actionable feedback instantly. Free. No signup required.</p>
+              <h1>
+                Get Your Resume
+                <br />
+                <span className="highlight">Reviewed by AI</span>
+                <br />
+                in Seconds
+              </h1>
+              <p className="hero-sub">
+                Upload your resume, tell us the role you want — our AI analyses
+                it across 5 key dimensions and gives you actionable feedback
+                instantly. Free. No signup required.
+              </p>
               <div className="stats-row">
-                <div className="stat"><span className="stat-num">5</span><span className="stat-label">Categories Scored</span></div>
-                <div className="stat"><span className="stat-num">~10s</span><span className="stat-label">Analysis Time</span></div>
-                <div className="stat"><span className="stat-num">100%</span><span className="stat-label">Free Forever</span></div>
+                <div className="stat">
+                  <span className="stat-num">5</span>
+                  <span className="stat-label">Categories Scored</span>
+                </div>
+                <div className="stat">
+                  <span className="stat-num">~10s</span>
+                  <span className="stat-label">Analysis Time</span>
+                </div>
+                <div className="stat">
+                  <span className="stat-num">100%</span>
+                  <span className="stat-label">Free Forever</span>
+                </div>
               </div>
             </div>
 
             <div className="form-card">
               <div className="card">
                 <div className="card-title">Upload Your Resume</div>
-                <div className="card-sub">PDF format only · Max 10MB · Your data is never shared</div>
+                <div className="card-sub">
+                  PDF format only · Max 10MB · Your data is never shared
+                </div>
 
                 {error && <div className="error-msg">{error}</div>}
 
                 <form onSubmit={handleSubmit}>
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Your Name <span className="optional">(optional)</span></label>
-                      <input type="text" placeholder="Lauren Jude" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                      <label>
+                        Your Name <span className="optional">(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Lauren Jude"
+                        value={form.name}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, name: e.target.value }))
+                        }
+                      />
                     </div>
                     <div className="form-group">
-                      <label>Email <span className="optional">(optional)</span></label>
-                      <input type="email" placeholder="you@email.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                      <label>
+                        Email <span className="optional">(optional)</span>
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="you@email.com"
+                        value={form.email}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, email: e.target.value }))
+                        }
+                      />
                     </div>
                   </div>
 
                   <div className="form-group">
                     <label>Job Title Applying For *</label>
-                    <input type="text" placeholder="e.g. AI Automation Specialist, Product Manager..." value={form.jobTitle} onChange={e => setForm(f => ({ ...f, jobTitle: e.target.value }))} required />
+                    <input
+                      type="text"
+                      placeholder="e.g. AI Automation Specialist, Product Manager..."
+                      value={form.jobTitle}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, jobTitle: e.target.value }))
+                      }
+                      required
+                    />
                   </div>
 
                   <div className="form-group">
-                    <label>Job Description <span className="optional">(optional — improves accuracy)</span></label>
+                    <label>
+                      Job Description{" "}
+                      <span className="optional">
+                        (optional — improves accuracy)
+                      </span>
+                    </label>
                     <textarea
                       placeholder="Paste the job description here for a more targeted analysis..."
                       value={form.jobDesc}
-                      onChange={e => setForm(f => ({ ...f, jobDesc: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, jobDesc: e.target.value }))
+                      }
                     />
                     {form.jobDesc.trim() && (
-                      <span className="jd-tip">✓ AI will match your resume against this specific role</span>
+                      <span className="jd-tip">
+                        ✓ AI will match your resume against this specific role
+                      </span>
                     )}
                   </div>
 
-                  <div className={`upload-zone ${dragOver ? 'drag-over' : ''} ${file ? 'has-file' : ''}`}
-                    onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                  <div
+                    className={`upload-zone ${dragOver ? "drag-over" : ""} ${file ? "has-file" : ""}`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDragOver(true);
+                    }}
                     onDragLeave={() => setDragOver(false)}
-                    onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f?.type === 'application/pdf') setFile(f); else setError('Please upload a PDF file.'); }}>
-                    <input type="file" accept=".pdf" onChange={e => { const f = e.target.files[0]; if (f) setFile(f); }} />
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragOver(false);
+                      const f = e.dataTransfer.files[0];
+                      if (f?.type === "application/pdf") setFile(f);
+                      else setError("Please upload a PDF file.");
+                    }}>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => {
+                        const f = e.target.files[0];
+                        if (f) setFile(f);
+                      }}
+                    />
                     {file ? (
                       <>
                         <span className="upload-icon">✅</span>
@@ -1037,14 +1133,19 @@ export default function App() {
                     ) : (
                       <>
                         <span className="upload-icon">📄</span>
-                        <div className="upload-text">Drop your PDF here or click to browse</div>
+                        <div className="upload-text">
+                          Drop your PDF here or click to browse
+                        </div>
                         <div className="upload-hint">PDF only · Max 10MB</div>
                       </>
                     )}
                   </div>
 
-                  <button type="submit" className={`btn-submit ${loading ? 'loading' : ''}`} disabled={loading}>
-                    {loading ? 'Analysing...' : 'Analyse My Resume →'}
+                  <button
+                    type="submit"
+                    className={`btn-submit ${loading ? "loading" : ""}`}
+                    disabled={loading}>
+                    {loading ? "Analysing..." : "Analyse My Resume →"}
                   </button>
                 </form>
               </div>
@@ -1052,34 +1153,43 @@ export default function App() {
           </>
         )}
 
-        {page === 'loading' && (
+        {page === "loading" && (
           <div className="loading-screen">
             <div className="loader" />
             <div className="loading-text">Analysing your resume...</div>
             <div className="loading-steps">
               {LOADING_STEPS.map((step, i) => (
-                <div key={i} className={`loading-step ${i === loadingStep ? 'active' : ''}`}>
-                  {i < loadingStep ? '✓ ' : i === loadingStep ? '→ ' : '  '}{step}
+                <div
+                  key={i}
+                  className={`loading-step ${i === loadingStep ? "active" : ""}`}>
+                  {i < loadingStep ? "✓ " : i === loadingStep ? "→ " : "  "}
+                  {step}
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {page === 'results' && results && (
+        {page === "results" && results && (
           <div className="results">
-            <button className="back-btn" onClick={reset}>← Review Another Resume</button>
+            <button
+              className="back-btn"
+              onClick={reset}>
+              ← Review Another Resume
+            </button>
             <div className="results-header">
               <div className="hero-tag">Analysis Complete</div>
-              <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
-                Your Resume for <span className="highlight">{results.jobTitle}</span>
+              <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
+                Your Resume for{" "}
+                <span className="highlight">{results.jobTitle}</span>
               </h1>
               <div className="overall-score">
                 <span className="score-num">{results.overall_score}</span>
                 <span className="score-label">/ 100</span>
               </div>
               <div>
-                <span className={`score-grade ${getGrade(results.overall_score).cls}`}>
+                <span
+                  className={`score-grade ${getGrade(results.overall_score).cls}`}>
                   {getGrade(results.overall_score).label}
                 </span>
               </div>
@@ -1087,27 +1197,41 @@ export default function App() {
 
             <div className="scores-grid">
               {Object.entries(SCORE_LABELS).map(([key, label]) => (
-                <div key={key} className="score-bar-card">
+                <div
+                  key={key}
+                  className="score-bar-card">
                   <div className="score-bar-header">
                     <span className="score-bar-label">{label}</span>
-                    <span className="score-bar-value" style={{ color: getScoreColor(results[key]) }}>
+                    <span
+                      className="score-bar-value"
+                      style={{ color: getScoreColor(results[key]) }}>
                       {results[key]}/10
                     </span>
                   </div>
                   <div className="bar-track">
-                    <div className="bar-fill" style={{
-                      width: `${(results[key] / 10) * 100}%`,
-                      background: getScoreColor(results[key])
-                    }} />
+                    <div
+                      className="bar-fill"
+                      style={{
+                        width: `${(results[key] / 10) * 100}%`,
+                        background: getScoreColor(results[key]),
+                      }}
+                    />
                   </div>
                 </div>
               ))}
             </div>
 
             <div className="section-title">💪 Strengths</div>
-            <div className="feedback-grid" style={{ marginBottom: '2rem' }}>
-              {(Array.isArray(results.strengths) ? results.strengths : results.strengths.split(',').map(s => s.trim())).map((s, i) => (
-                <div key={i} className="feedback-card strength">
+            <div
+              className="feedback-grid"
+              style={{ marginBottom: "2rem" }}>
+              {(Array.isArray(results.strengths)
+                ? results.strengths
+                : results.strengths.split(",").map((s) => s.trim())
+              ).map((s, i) => (
+                <div
+                  key={i}
+                  className="feedback-card strength">
                   <span className="feedback-icon">✅</span>
                   <div className="feedback-text">{s}</div>
                 </div>
@@ -1115,9 +1239,16 @@ export default function App() {
             </div>
 
             <div className="section-title">🎯 Improvements</div>
-            <div className="feedback-grid" style={{ marginBottom: '2rem' }}>
-              {(Array.isArray(results.improvements) ? results.improvements : results.improvements.split(',').map(s => s.trim())).map((s, i) => (
-                <div key={i} className="feedback-card improvement">
+            <div
+              className="feedback-grid"
+              style={{ marginBottom: "2rem" }}>
+              {(Array.isArray(results.improvements)
+                ? results.improvements
+                : results.improvements.split(",").map((s) => s.trim())
+              ).map((s, i) => (
+                <div
+                  key={i}
+                  className="feedback-card improvement">
                   <span className="feedback-icon">💡</span>
                   <div className="feedback-text">{s}</div>
                 </div>
@@ -1128,8 +1259,10 @@ export default function App() {
             <div className="bullet-section">
               <div className="bullet-header">
                 <div className="bullet-label">AI Suggested Improvement</div>
-                <button className={`copy-btn ${copied ? 'copied' : ''}`} onClick={copyBullet}>
-                  {copied ? '✓ Copied!' : 'Copy'}
+                <button
+                  className={`copy-btn ${copied ? "copied" : ""}`}
+                  onClick={copyBullet}>
+                  {copied ? "✓ Copied!" : "Copy"}
                 </button>
               </div>
               <div className="bullet-text">{results.rewritten_bullet}</div>
@@ -1141,18 +1274,34 @@ export default function App() {
             </div>
 
             <div className="actions-row">
-              <button className="btn-secondary" onClick={reset}>Review Another Resume</button>
-              <button className={`btn-secondary ${shared ? 'confirmed' : ''}`} onClick={shareResults}>
-                {shared ? '✓ Link Copied!' : 'Share Results'}
+              <button
+                className="btn-secondary"
+                onClick={reset}>
+                Review Another Resume
               </button>
-              <button className="btn-primary" onClick={() => window.print()}>Save Results</button>
+              <button
+                className={`btn-secondary ${shared ? "confirmed" : ""}`}
+                onClick={shareResults}>
+                {shared ? "✓ Link Copied!" : "Share Results"}
+              </button>
+              <button
+                className="btn-primary"
+                onClick={() => window.print()}>
+                Save Results
+              </button>
             </div>
           </div>
         )}
 
         <footer>
-          Built by <a href="https://laurens-potfolio.vercel.app" target="_blank" rel="noreferrer">Lauren Jude</a> · AI Automation Specialist ·
-          Powered by n8n + Groq LLaMA 3.3 70B
+          Built by{" "}
+          <a
+            href="https://laurens-potfolio.vercel.app"
+            target="_blank"
+            rel="noreferrer">
+            Lauren Jude
+          </a>{" "}
+          · AI Automation Specialist · Powered by n8n + Groq LLaMA 3.3 70B
         </footer>
       </div>
     </>

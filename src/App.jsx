@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 const WEBHOOK_URL = 'https://lauren002.app.n8n.cloud/webhook/resume-review';
 
@@ -331,6 +331,36 @@ const styles = `
 
   input::placeholder { color: var(--text2); opacity: 0.5; }
 
+  textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    resize: vertical;
+    min-height: 110px;
+    width: 100%;
+    line-height: 1.6;
+  }
+
+  textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 194, 255, 0.1);
+  }
+
+  textarea::placeholder { color: var(--text2); opacity: 0.5; }
+
+  .jd-tip {
+    font-size: 0.75rem;
+    color: var(--accent3);
+    opacity: 0.8;
+    margin-top: 0.3rem;
+  }
+
   /* UPLOAD ZONE */
   .upload-zone {
     border: 2px dashed var(--border);
@@ -629,12 +659,38 @@ const styles = `
     background: linear-gradient(180deg, var(--accent), var(--accent2));
   }
 
+  .bullet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
   .bullet-label {
     font-size: 0.75rem;
     color: var(--accent);
     letter-spacing: 1px;
     text-transform: uppercase;
-    margin-bottom: 0.75rem;
+  }
+
+  .copy-btn {
+    background: rgba(0, 194, 255, 0.1);
+    border: 1px solid rgba(0, 194, 255, 0.3);
+    border-radius: 6px;
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.65rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover { background: rgba(0, 194, 255, 0.2); }
+
+  .copy-btn.copied {
+    background: rgba(0, 255, 148, 0.1);
+    border-color: rgba(0, 255, 148, 0.3);
+    color: var(--accent3);
   }
 
   .bullet-text {
@@ -684,6 +740,11 @@ const styles = `
   .btn-secondary:hover {
     border-color: var(--accent);
     color: var(--accent);
+  }
+
+  .btn-secondary.confirmed {
+    border-color: rgba(0, 255, 148, 0.4);
+    color: var(--accent3);
   }
 
   .btn-primary {
@@ -812,8 +873,21 @@ export default function App() {
   const [error, setError] = useState('');
   const [file, setFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', jobTitle: '' });
+  const [form, setForm] = useState({ name: '', email: '', jobTitle: '', jobDesc: '' });
+  const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const fileRef = useRef();
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith('#r=')) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(hash.slice(3)));
+        setResults(decoded);
+        setPage('results');
+      } catch {}
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -834,6 +908,7 @@ export default function App() {
       fd.append('jobTitle', form.jobTitle);
       fd.append('name', form.name);
       fd.append('email', form.email);
+      if (form.jobDesc.trim()) fd.append('jobDescription', form.jobDesc);
 
       const res = await fetch(WEBHOOK_URL, { method: 'POST', body: fd });
       const json = await res.json();
@@ -841,6 +916,7 @@ export default function App() {
       clearInterval(stepInterval);
 
       if (json.success && json.data) {
+        window.location.hash = 'r=' + encodeURIComponent(JSON.stringify(json.data));
         setResults(json.data);
         setPage('results');
       } else {
@@ -857,11 +933,26 @@ export default function App() {
   };
 
   const reset = () => {
+    window.location.hash = '';
     setPage('upload');
     setResults(null);
     setError('');
     setFile(null);
-    setForm({ name: '', email: '', jobTitle: '' });
+    setForm({ name: '', email: '', jobTitle: '', jobDesc: '' });
+    setCopied(false);
+    setShared(false);
+  };
+
+  const copyBullet = () => {
+    navigator.clipboard.writeText(results.rewritten_bullet);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareResults = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setShared(true);
+    setTimeout(() => setShared(false), 2000);
   };
 
   return (
@@ -918,6 +1009,18 @@ export default function App() {
                   <div className="form-group">
                     <label>Job Title Applying For *</label>
                     <input type="text" placeholder="e.g. AI Automation Specialist, Product Manager..." value={form.jobTitle} onChange={e => setForm(f => ({ ...f, jobTitle: e.target.value }))} required />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Job Description <span className="optional">(optional — improves accuracy)</span></label>
+                    <textarea
+                      placeholder="Paste the job description here for a more targeted analysis..."
+                      value={form.jobDesc}
+                      onChange={e => setForm(f => ({ ...f, jobDesc: e.target.value }))}
+                    />
+                    {form.jobDesc.trim() && (
+                      <span className="jd-tip">✓ AI will match your resume against this specific role</span>
+                    )}
                   </div>
 
                   <div className={`upload-zone ${dragOver ? 'drag-over' : ''} ${file ? 'has-file' : ''}`}
@@ -1023,7 +1126,12 @@ export default function App() {
 
             <div className="section-title">✍️ Rewritten Bullet Point</div>
             <div className="bullet-section">
-              <div className="bullet-label">AI Suggested Improvement</div>
+              <div className="bullet-header">
+                <div className="bullet-label">AI Suggested Improvement</div>
+                <button className={`copy-btn ${copied ? 'copied' : ''}`} onClick={copyBullet}>
+                  {copied ? '✓ Copied!' : 'Copy'}
+                </button>
+              </div>
               <div className="bullet-text">{results.rewritten_bullet}</div>
             </div>
 
@@ -1034,6 +1142,9 @@ export default function App() {
 
             <div className="actions-row">
               <button className="btn-secondary" onClick={reset}>Review Another Resume</button>
+              <button className={`btn-secondary ${shared ? 'confirmed' : ''}`} onClick={shareResults}>
+                {shared ? '✓ Link Copied!' : 'Share Results'}
+              </button>
               <button className="btn-primary" onClick={() => window.print()}>Save Results</button>
             </div>
           </div>
